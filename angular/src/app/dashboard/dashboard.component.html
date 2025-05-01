@@ -1,0 +1,82 @@
+<div class="dashboard-container">
+  <header class="dashboard-header">
+    <div class="header-content">
+      <h1 class="title">Koncert</h1>
+      <div class="user-menu" *ngIf="authService.isLoggedIn()">
+        <span class="username">
+          {{ authService.getCurrentUser()?.username }}
+          <span class="admin-badge" *ngIf="isAdmin">Admin</span>
+        </span>
+        <button class="logout-button" (click)="logout()">Déconnexion</button>
+      </div>
+    </div>
+  </header>
+  
+  <!-- Barre de recherche -->
+  <div class="search-container">
+    <div class="search-box">
+      <input 
+        type="text" 
+        placeholder="Rechercher un utilisateur ou un message..." 
+        [(ngModel)]="searchQuery"
+        (keyup)="applySearch()"
+      >
+      <button class="search-button">
+        <span class="search-icon">🔍</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="admin-dashboard">
+    <h2>Page Administrateur</h2>
+
+    <!-- Section Gestion des utilisateurs -->
+    <div class="admin-section">
+      <h3>Gestion des utilisateurs</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Nom d'utilisateur</th>
+            <th>Email</th>
+            <th>Rôle</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let user of users">
+            <td>{{ user.username }}</td>
+            <td>{{ user.email }}</td>
+            <td>{{ user.role }}</td>
+            <td>
+              <button (click)="promoteToAdmin(user)">Promouvoir</button>
+              <button (click)="banUser(user)">Bannir</button>
+              <button (click)="deleteUser(user)">Supprimer</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Section Messages signalés -->
+    <div class="admin-section">
+      <h3>Messages signalés</h3>
+      <ul>
+        <li *ngFor="let message of reportedMessages">
+          <p>{{ message.content }}</p>
+          <button (click)="deleteMessage(message)">Supprimer</button>
+          <button (click)="ignoreReport(message)">Ignorer</button>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Section Statistiques -->
+    <div class="admin-section">
+      <h3>Statistiques</h3>
+      <div class="stats">
+        <p>Nombre total d'utilisateurs : {{ stats.totalUsers }}</p>
+        <p>Messages envoyés aujourd'hui : {{ stats.messagesToday }}</p>
+        <p>Utilisateurs actifs : {{ stats.activeUsers }}</p>
+      </div>
+    </div>
+  </div>
+</div>
