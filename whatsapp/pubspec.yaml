@@ -9,6 +9,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  provider: ^6.1.1
+  intl: ^0.18.0 # Vérifiez que cette dépendance est bien ajoutée
 
 dev_dependencies:
   flutter_test:
