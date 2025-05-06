@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'main.dart';
+import 'auth_service.dart';
 
+// Page des paramètres
 class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
 
+  // Construction de l'interface des paramètres
   @override
   Widget build(BuildContext context) {
+    // Accès au provider de thème
     final themeProvider = Provider.of<ThemeProvider>(context);
     
     return ListView(
@@ -89,6 +93,21 @@ class SettingsPage extends StatelessWidget {
         const ListTile(
           leading: Icon(Icons.people_outline),
           title: Text('Inviter un ami'),
+        ),
+        const Divider(height: 32),
+
+        // Bouton de déconnexion
+        ListTile(
+          leading: const Icon(Icons.logout, color: Colors.red),
+          title: const Text('Déconnexion', 
+            style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+          onTap: () {
+            AuthService.logout();
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const LoginPage()),
+            );
+          },
         ),
       ],
     );

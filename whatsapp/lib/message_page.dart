@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart'; // Importer intl pour le formatage de l'heure
 
+// Page de messagerie
 class MessagePage extends StatefulWidget {
+  // Propriétés du contact
   final String contactName;
   final String contactImage; // Paramètre pour l'image du contact
 
@@ -11,18 +12,30 @@ class MessagePage extends StatefulWidget {
   _MessagePageState createState() => _MessagePageState();
 }
 
+// État de la page de messagerie
 class _MessagePageState extends State<MessagePage> {
-  final List<Map<String, String>> _messages = []; // Stocker le message et l'heure
+  // Stockage des messages par contact
+  static final Map<String, List<Map<String, String>>> _allMessages = {};
   final TextEditingController _messageController = TextEditingController();
+
+  List<Map<String, String>> get _messages => 
+      _allMessages[widget.contactName] ??= [];
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialiser la liste des messages si elle n'existe pas
+    _allMessages[widget.contactName] ??= [];
+  }
 
   void _sendMessage() {
     if (_messageController.text.isNotEmpty) {
       setState(() {
-        final now = DateTime.now();
-        final formattedTime = DateFormat('HH:mm', 'fr_FR').format(now); // Assurez-vous que le format est valide
+        final now = TimeOfDay.now();
+        final formattedTime = MaterialLocalizations.of(context).formatTimeOfDay(now);
         _messages.add({
           'text': _messageController.text,
-          'time': formattedTime, // Ajouter l'heure formatée
+          'time': formattedTime,
         });
         _messageController.clear();
       });
@@ -49,6 +62,7 @@ class _MessagePageState extends State<MessagePage> {
             child: ListView.builder(
               itemCount: _messages.length,
               itemBuilder: (context, index) {
+                final message = _messages[index];
                 return Align(
                   alignment: Alignment.centerRight,
                   child: Container(
@@ -63,13 +77,13 @@ class _MessagePageState extends State<MessagePage> {
                       children: [
                         Flexible(
                           child: Text(
-                            _messages[index]['text']!,
+                            message['text']!,
                             style: const TextStyle(color: Colors.white),
                           ),
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          _messages[index]['time']!, // Afficher l'heure
+                          message['time']!,
                           style: const TextStyle(fontSize: 10, color: Colors.white70),
                         ),
                       ],

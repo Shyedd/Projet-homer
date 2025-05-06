@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import 'design.dart';
 import 'home_page.dart';
+import 'auth_service.dart';
 
+// Point d'entrée de l'application
 void main() {
   runApp(
     ChangeNotifierProvider(
@@ -14,7 +14,9 @@ void main() {
   );
 }
 
+// Gestionnaire de thème
 class ThemeProvider with ChangeNotifier {
+  // État du thème sombre
   bool _isDarkMode = true;
   bool get isDarkMode => _isDarkMode;
 
@@ -24,6 +26,7 @@ class ThemeProvider with ChangeNotifier {
   }
 }
 
+// Widget principal de l'application
 class MainApp extends StatelessWidget {
   const MainApp({super.key});
 
@@ -32,65 +35,81 @@ class MainApp extends StatelessWidget {
     final themeProvider = Provider.of<ThemeProvider>(context);
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: themeProvider.isDarkMode
-          ? ThemeData.dark().copyWith(
-              primaryColor: const Color.fromARGB(255, 13, 255, 0),
-              appBarTheme: const AppBarTheme(
-                backgroundColor: Color.fromARGB(255, 13, 255, 0),
-                elevation: 0,
-              ),
-              scaffoldBackgroundColor: const Color(0xFF121B22),
-              elevatedButtonTheme: ElevatedButtonThemeData(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color.fromARGB(255, 13, 255, 0),
-                ),
-              ),
-            )
-          : ThemeData.light().copyWith(
-              primaryColor: const Color.fromARGB(255, 13, 255, 0),
-              appBarTheme: const AppBarTheme(
-                backgroundColor: Color.fromARGB(255, 13, 255, 0),
-                elevation: 0,
-              ),
-              elevatedButtonTheme: ElevatedButtonThemeData(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color.fromARGB(255, 13, 255, 0),
-                ),
-              ),
+      theme: themeProvider.isDarkMode ? 
+        ThemeData.dark().copyWith(
+          primaryColor: const Color.fromARGB(255, 13, 255, 0),
+          appBarTheme: const AppBarTheme(
+            backgroundColor: Color.fromARGB(255, 13, 255, 0),
+            elevation: 0,
+          ),
+          scaffoldBackgroundColor: const Color(0xFF121B22),
+          elevatedButtonTheme: ElevatedButtonThemeData(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color.fromARGB(255, 13, 255, 0),
             ),
+          ),
+        ) : 
+        ThemeData.light().copyWith(
+          primaryColor: const Color.fromARGB(255, 13, 255, 0),
+          appBarTheme: const AppBarTheme(
+            backgroundColor: Color.fromARGB(255, 13, 255, 0),
+            elevation: 0,
+          ),
+          elevatedButtonTheme: ElevatedButtonThemeData(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color.fromARGB(255, 13, 255, 0),
+            ),
+          ),
+        ),
       home: const LoginPage(),
-      routes: {
-        '/apiIntegration': (context) => const ApiIntegrationPage(),
-      },
     );
   }
 }
 
+// Page de connexion
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
   @override
+  // ignore: library_private_types_in_public_api
   _LoginPageState createState() => _LoginPageState();
 }
 
+// État de la page de connexion
 class _LoginPageState extends State<LoginPage> {
+  // Contrôleurs pour les champs de saisie
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final String _token =
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Iktvc3R1bHNraSBNYXR0w6lvIiwiaWF0IjoxNTE2MjM5MDIyfQ.4SxXMwf4xGnYnDZU-xXnl8oE7q6XHoZvKa7Lwd26amE';
+  bool _isCreatingAccount = false;
 
   void _login() {
-    setState(() {
-      if (_usernameController.text == '' &&
-          _passwordController.text == '' &&
-          _token ==
-              'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6Iktvc3R1bHNraSBNYXR0w6lvIiwiaWF0IjoxNTE2MjM5MDIyfQ.4SxXMwf4xGnYnDZU-xXnl8oE7q6XHoZvKa7Lwd26amE') {
+    final username = _usernameController.text;
+    final password = _passwordController.text;
+    
+    if (_isCreatingAccount) {
+      if (AuthService.createAccount(username, password)) {
+        AuthService.login(username, password);
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const HomePage()),
         );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Nom d\'utilisateur déjà pris')),
+        );
       }
-    });
+    } else {
+      if (AuthService.login(username, password)) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomePage()),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Identifiants incorrects')),
+        );
+      }
+    }
   }
 
   @override
@@ -101,83 +120,40 @@ class _LoginPageState extends State<LoginPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
+            Text(
+              _isCreatingAccount ? 'Créer un compte' : 'Connexion',
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 20),
             TextField(
               controller: _usernameController,
-              decoration: Design.inputDecoration('Enter Username'),
+              decoration: Design.inputDecoration('Identifiant'),
             ),
             const SizedBox(height: 20),
             TextField(
               controller: _passwordController,
-              decoration: Design.inputDecoration('Enter Password'),
+              decoration: Design.inputDecoration('Mot de passe'),
               obscureText: true,
             ),
             const SizedBox(height: 20),
             ElevatedButton(
               onPressed: _login,
               style: Design.buttonStyle(),
-              child: const Text('Login'),
+              child: Text(_isCreatingAccount ? 'Créer' : 'Se connecter'),
             ),
-            const SizedBox(height: 20),
-            ElevatedButton(
+            TextButton(
               onPressed: () {
-                Navigator.pushNamed(context, '/apiIntegration');
+                setState(() {
+                  _isCreatingAccount = !_isCreatingAccount;
+                });
               },
-              child: const Text('Go to API Integration'),
+              child: Text(_isCreatingAccount
+                  ? 'Déjà un compte ? Se connecter'
+                  : 'Créer un compte'),
             ),
           ],
         ),
       ),
-    );
-  }
-}
-
-class ApiIntegrationPage extends StatelessWidget {
-  const ApiIntegrationPage({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("API Integration")),
-      body: const Center(child: ApiCallWidget()),
-    );
-  }
-}
-
-class ApiCallWidget extends StatefulWidget {
-  const ApiCallWidget({super.key});
-
-  @override
-  _ApiCallWidgetState createState() => _ApiCallWidgetState();
-}
-
-class _ApiCallWidgetState extends State<ApiCallWidget> {
-  List<String> messages = [];
-
-  @override
-  void initState() {
-    super.initState();
-    fetchMessages();
-  }
-
-  Future<void> fetchMessages() async {
-    final response =
-        await http.get(Uri.parse('http://localhost:3000/api/messages'));
-
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      setState(() {
-        messages = List<String>.from(data['messages']);
-      });
-    } else {
-      throw Exception('Failed to load messages');
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: messages.map((message) => Text(message)).toList(),
     );
   }
 }
